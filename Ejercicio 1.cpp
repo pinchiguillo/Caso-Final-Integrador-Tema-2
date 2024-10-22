@@ -11,7 +11,6 @@
 
 typedef std::vector<std::string> Tokens;
 std::unordered_map<std::string, double> variables;
-std::unordered_map<std::string, std::pair<int, std::function<double(const std::vector<double>&)>>> functions;
 
 Tokens tokenize(const std::string& input) {
     Tokens tokens;
@@ -81,3 +80,43 @@ double evaluate(Tokens& tokens, std::unordered_map<std::string, double> localVar
             if (stack.size() < 2) {
                 throw std::runtime_error("Operandos insuficientes para el modulo");
             }
+            double b = stack.top(); stack.pop();
+            double a = stack.top(); stack.pop();
+            if (b == 0) {
+                throw std::runtime_error("Modulo por cero no esta definido");
+            }
+            stack.push(fmod(a, b));
+        } else if (variables.find(token) != variables.end()) {
+            // Si el token es una variable conocida, empújala en la pila
+            stack.push(variables[token]);
+        } else {
+            // Si no es un operador, asume que es un número
+            try {
+                stack.push(std::stod(token));
+            } catch (const std::invalid_argument&) {
+                throw std::runtime_error("Token desconocido: " + token);
+            }
+        }
+    }
+
+    if (stack.size() != 1) {
+        throw std::runtime_error("Expresion invalida");
+    }
+
+    return stack.top();
+}
+
+int main() {
+    try {
+        std::string input;
+        std::cout << "Ingrese la expresión en notación postfija: ";
+        std::getline(std::cin, input);
+        Tokens tokens = tokenize(input);
+        double result = evaluate(tokens);
+        std::cout << "Resultado: " << result << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
